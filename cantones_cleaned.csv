@@ -1,0 +1,84 @@
+CODIGO_PROVINCIA,PROVINCIA,CODIGO_CANTON,CANTON
+1,san jose,101,san jose
+1,san jose,102,escazu
+1,san jose,103,desamparados
+1,san jose,104,puriscal
+1,san jose,105,tarrazu
+1,san jose,106,aserri
+1,san jose,107,mora
+1,san jose,108,goicoechea
+1,san jose,109,santa ana
+1,san jose,110,alajuelita
+1,san jose,111,vazquez de coronado
+1,san jose,112,acosta
+1,san jose,113,tibas
+1,san jose,114,moravia
+1,san jose,115,montes de oca
+1,san jose,116,turrubares
+1,san jose,117,dota
+1,san jose,118,curridabat
+1,san jose,119,perez zeledon
+1,san jose,120,leon cortes castro
+2,alajuela,201,alajuela
+2,alajuela,202,san ramon
+2,alajuela,203,grecia
+2,alajuela,204,san mateo
+2,alajuela,205,atenas
+2,alajuela,206,naranjo
+2,alajuela,207,palmares
+2,alajuela,208,poas
+2,alajuela,209,orotina
+2,alajuela,210,san carlos
+2,alajuela,211,zarcero
+2,alajuela,212,sarchi
+2,alajuela,213,upala
+2,alajuela,214,los chiles
+2,alajuela,215,guatuso
+2,alajuela,216,rio cuarto
+3,cartago,301,cartago
+3,cartago,302,paraiso
+3,cartago,303,la union
+3,cartago,304,jimenez
+3,cartago,305,turrialba
+3,cartago,306,alvarado
+3,cartago,307,oreamuno
+3,cartago,308,el guarco
+4,heredia,401,heredia
+4,heredia,402,barva
+4,heredia,403,santo domingo
+4,heredia,404,santa barbara
+4,heredia,405,san rafael
+4,heredia,406,san isidro
+4,heredia,407,belen
+4,heredia,408,flores
+4,heredia,409,san pablo
+4,heredia,410,sarapiqui
+5,guanacaste,501,liberia
+5,guanacaste,502,nicoya
+5,guanacaste,503,santa cruz
+5,guanacaste,504,bagaces
+5,guanacaste,505,carrillo
+5,guanacaste,506,canas
+5,guanacaste,507,abangares
+5,guanacaste,508,tilaran
+5,guanacaste,509,nandayure
+5,guanacaste,510,la cruz
+5,guanacaste,511,hojancha
+6,puntarenas,601,puntarenas
+6,puntarenas,602,esparza
+6,puntarenas,603,buenos aires
+6,puntarenas,604,montes de oro
+6,puntarenas,605,osa
+6,puntarenas,606,quepos
+6,puntarenas,607,golfito
+6,puntarenas,608,coto brus
+6,puntarenas,609,parrita
+6,puntarenas,610,corredores
+6,puntarenas,611,garabito
+6,puntarenas,612,monteverde
+7,limon,701,limon
+7,limon,702,pococi
+7,limon,703,siquirres
+7,limon,704,talamanca
+7,limon,705,matina
+7,limon,706,guacimo
