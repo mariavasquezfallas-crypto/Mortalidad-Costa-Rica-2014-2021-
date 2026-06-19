@@ -1,0 +1,249 @@
+---
+title: "Mortalidad Costa Rica (2014-2021)"
+author: "María José Vásquez Fallas"
+format:
+  dashboard:
+    orientation: rows
+    nav-buttons:
+      - icon: github
+        href: https://github.com
+lang: es 
+---
+```{r}
+#| label: carga-paquetes
+#| message: false
+#| warning: false
+
+library(tidyverse)
+library(sf)
+library(tmap)
+library(plotly)
+library(DT)
+library(leaflet)
+library(leaflet.extras)
+library(geodata)
+
+cri <- gadm(
+  country = "CRI",
+  level = 1,
+  path = "datos"
+)
+
+provincias <- st_as_sf(cri)
+
+# Modo interactivo para los mapas tmap
+tmap_mode("view")
+
+```
+
+```{r}
+#| label: carga-datos
+
+# Carga provincias
+provincias <- st_read(
+  "provincias.gpkg",
+  quiet = TRUE
+)
+
+provincias_simplificadas <-
+  provincias |>
+  st_transform(8908) |>                              
+  st_simplify(dTolerance = 500, preserveTopology = TRUE) |>
+  st_transform(4326)  
+
+# Deceases Costa Rica (puntos)
+muertes_tabla <- read.csv("muertes_2014_2021.csv")
+
+muertes <- st_as_sf(
+  muertes_tabla, 
+  coords = c("longitud", "latitud"), 
+  crs = 4326
+)
+```
+
+```{r}
+# Limpiar: eliminar filas sin coordenadas o con cantones de nota histórica
+muertes_tabla <- muertes_tabla |>
+  filter(!is.na(latitud), !is.na(longitud))
+
+# Operación de análisis principal:
+# Agrupación por provincia y año: total de defunciones
+
+def_por_provincia <- muertes_tabla |>
+  group_by(provincia) |>
+  summarise(
+    total_defunciones = n(),
+    .groups = "drop"
+  ) |>
+  arrange(desc(total_defunciones))
+
+def_por_anio <- muertes_tabla |>
+  group_by(anodef) |>
+  summarise(total = n(), .groups = "drop")
+
+def_por_canton <- muertes_tabla |>
+  group_by(provincia, pc, latitud, longitud) |>
+  summarise(total_defunciones = n(), .groups = "drop") |>
+  arrange(desc(total_defunciones))
+
+def_por_sexo <- muertes_tabla |>
+  group_by(sexo) |>
+  summarise(total = n(), .groups = "drop")
+
+# Estadísticas para value boxes
+total_registros     <- nrow(muertes_tabla)
+total_provincias    <- n_distinct(muertes_tabla$provincia)
+promedio_anual      <- round(total_registros / n_distinct(muertes_tabla$anodef), 0)
+canton_mayor        <- def_por_canton |> slice_max(total_defunciones, n = 1) |> pull(pc)
+anno_mas_defunciones <- def_por_anio |> slice_max(total, n = 1) |> pull(anodef)
+```
+
+# Inicio
+
+## Row {height=15%}
+
+```{r}
+#| content: valuebox
+#| title: "Total de defunciones"
+#| icon: "activity"
+#| color: "warning"
+list(value = format(total_registros, big.mark = ","))
+```
+
+```{r}
+#| content: valuebox
+#| title: "Promedio anual"
+#| icon: "graph-down-arrow"
+#| color: "second"
+list(value = format(promedio_anual, big.mark = ","))
+```
+
+```{r}
+#| content: valuebox
+#| title: "Año con más defunciones"
+#| icon: "bar-chart-line-fill"
+#| color: "success"
+list(value = anno_mas_defunciones)
+```
+
+## Row {height=55%}
+
+### Column {width=60%}
+
+```{r}
+#| title: "Mapa de defunciones por cantón"
+
+pal <- colorNumeric(
+  palette = "YlOrRd",
+  domain  = def_por_canton$total_defunciones
+)
+
+leaflet(def_por_canton) |>
+  addProviderTiles(providers$CartoDB.Positron, group = "CartoDB Positron") |>
+  addProviderTiles(providers$OpenStreetMap,    group = "OpenStreetMap") |>
+  addProviderTiles(providers$Esri.WorldImagery, group = "Imágenes Esri") |>
+  addPolygons(
+    data = provincias_simplificadas, weight = 2, color = "black", fillOpacity = 0,
+  label = ~provincias, group = "Provincias") |>
+  
+  addCircleMarkers(
+    lng         = ~longitud,
+    lat         = ~latitud,
+    radius      = ~sqrt(total_defunciones / 100) * 3,
+    color       = ~pal(total_defunciones),
+    fillColor   = ~pal(total_defunciones),
+    fillOpacity = 0.8,
+    weight      = 1,
+    popup = ~paste0(
+      "<b>", pc, "</b><br>",
+      "Provincia: ", provincia, "<br>",
+      "Total defunciones: <b>", format(total_defunciones, big.mark = ","), "</b>"
+    ),
+    label = ~paste0(pc, ": ", format(total_defunciones, big.mark = ",")),
+    group = "Defunciones por cantón"
+  ) |>
+  addLayersControl(
+    baseGroups    = c("CartoDB Positron", "OpenStreetMap","Imágenes Esri"),
+    overlayGroups = "Defunciones por cantón",
+    options       = layersControlOptions(collapsed = FALSE)
+  ) |>
+  addLegend(
+    position = "bottomright",
+    pal      = pal,
+    values   = ~total_defunciones,
+    title    = "Defunciones<br>por cantón",
+    opacity  = 0.8
+  )
+```
+
+
+### Column {width=40%, .tabset}
+
+```{r}
+#| title: "Defunciones por provincia (2014–2021)"
+
+g1 <- def_por_provincia |>
+  mutate(provincia = fct_reorder(provincia, total_defunciones)) |>
+  ggplot(aes(x = total_defunciones, y = provincia, fill = provincia)) +
+  geom_col(show.legend = FALSE) +
+  scale_fill_brewer(palette = "Reds") +
+  scale_x_continuous(labels = scales::comma) +
+  labs(
+    title = "Total de defunciones por provincia",
+    x     = "Total de defunciones",
+    y     = "Provincia"
+  ) +
+  theme_minimal(base_size = 12)
+
+ggplotly(g1, tooltip = c("x", "y")) |>
+  layout(margin = list(l = 10, r = 10, t = 40, b = 10))
+```
+
+```{r}
+#| title: "Evolución anual de defunciones"
+
+g2 <- def_por_anio |>
+  ggplot(aes(x = anodef, y = total, group = 1)) +
+  geom_line(color = "#1F77B4", linewidth = 1.2) +
+  geom_point(color = "#1F77B4", size = 3) +
+  scale_x_continuous(breaks = 2014:2021) +
+  scale_y_continuous(labels = scales::comma) +
+  labs(
+    title = "Defunciones anuales en Costa Rica",
+    x     = "Año",
+    y     = "Total de defunciones"
+  ) +
+  theme_minimal(base_size = 12)
+
+ggplotly(g2, tooltip = c("x", "y")) |>
+  layout(margin = list(l = 10, r = 10, t = 40, b = 10))
+```
+
+
+## Row {height=30%}
+
+### Column {width=60%}
+
+```{r}
+#| title: "Tabla de defunciones por cantón"
+
+muertes_tabla |> 
+  slice_sample(n = 1000) |>
+  select(
+    Nacionalidad     = nacionalid,
+    Sexo             = sexo,
+    `Causa de muerte` = des_causa,
+    `Lugar de muerte` = instmurio
+  ) |>
+  datatable(
+    rownames  = FALSE,
+    filter    = "top",
+    options   = list(
+      pageLength = 10,
+      language   = list(
+        url = "//cdn.datatables.net/plug-ins/1.13.6/i18n/es-ES.json"
+      )
+    ),
+    caption = "Registro de defunciones en Costa Rica 2014–2021"
+  )
+```
